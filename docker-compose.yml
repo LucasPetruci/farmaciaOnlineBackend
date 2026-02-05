@@ -1,0 +1,89 @@
+services:
+  farmaciaonline-app:
+    build:
+      context: .
+      dockerfile: docker/common/php-fpm/Dockerfile
+      target: development
+      args:
+        UID: ${UID}
+        GID: ${GID}
+        XDEBUG_ENABLED: ${XDEBUG_ENABLED}
+    container_name: farmaciaonline-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    depends_on:
+      farmaciaonline-db:
+        condition: service_healthy
+    networks:
+      - farmaciaonline
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(0);"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  farmaciaonline-nginx:
+    image: nginx:alpine
+    container_name: farmaciaonline-nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT}:80"
+    volumes:
+      - .:/var/www
+      - ./docker/development/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - farmaciaonline-app
+    networks:
+      - farmaciaonline
+
+  farmaciaonline-db:
+    image: mysql:8.0
+    container_name: farmaciaonline-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT_EXTERNAL}:3306"
+    volumes:
+      - farmaciaonline-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p${DB_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - farmaciaonline
+
+  farmaciaonline-workspace:
+    build:
+      context: .
+      dockerfile: docker/development/workspace/Dockerfile
+      args:
+        UID: ${UID}
+        GID: ${GID}
+        NODE_VERSION: ${NODE_VERSION}
+        XDEBUG_ENABLED: ${XDEBUG_ENABLED}
+    container_name: farmaciaonline-workspace
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    depends_on:
+      - farmaciaonline-app
+      - farmaciaonline-db
+    networks:
+      - farmaciaonline
+    tty: true
+    stdin_open: true
+
+networks:
+  farmaciaonline:
+    driver: bridge
+
+volumes:
+  farmaciaonline-data:
