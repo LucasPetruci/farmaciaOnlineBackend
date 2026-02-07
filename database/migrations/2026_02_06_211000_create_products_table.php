@@ -16,12 +16,12 @@ return new class extends Migration
             $table->string('name');
             $table->decimal('price', 10, 2);
             $table->enum('type', [
-                'medicamento',
-                'vitamina',
-                'suplemento',
-                'higiene',
-                'beleza',
-                'outros'
+                'medication',
+                'vitamin',
+                'supplement',
+                'hygiene',
+                'beauty',
+                'others'
             ]);
             $table->timestamps();
         });
