@@ -12,6 +12,8 @@ class ProductController extends Controller
 {
     public function index(IndexProductRequest $request): JsonResponse
     {
+        $perPage = $request->validated()['per_page'] ?? 10;
+
         $products = Product::query()
             ->when($request->filled('search'), function ($query) use ($request) {
                 $query->where('name', 'like', "%{$request->search}%");
@@ -24,7 +26,7 @@ class ProductController extends Controller
             }, function ($query) {
                 $query->orderBy('id', 'asc');
             })
-            ->paginate(15);
+            ->paginate($perPage);
 
         return response()->json($products);
     }

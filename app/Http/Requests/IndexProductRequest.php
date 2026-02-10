@@ -18,6 +18,7 @@ class IndexProductRequest extends FormRequest
             'type' => 'sometimes|in:medication,vitamin,supplement,hygiene,beauty,others',
             'sort_by' => 'sometimes|in:name,price',
             'sort_order' => 'sometimes|in:asc,desc',
+            'per_page' => 'sometimes|integer|min:10|max:50',
         ];
     }
 }
